@@ -4,6 +4,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <functional>
+#include <string.h>     //strcmp
 
 #include <pcap.h>
 #include <net/ethernet.h>
@@ -28,6 +29,7 @@ struct Callback<Ret(Params...)> {
    static std::function<Ret(Params...)> func; 
 };
 
+// static function dynamically bound to the member function packetHandler. 
 template <typename Ret, typename... Params>
 std::function<Ret(Params...)> Callback<Ret(Params...)>::func;
 
@@ -55,10 +57,17 @@ private:
     //used to pass C++ non-static function as callback to C function from libpcap
     typedef void (*callback_t)(u_char *, const struct pcap_pkthdr*, const u_char*);
     
-    int packetCount;    //processed packets counter
+    //Keep record of listened packets
+    //@{
+    uint packetCount;    //processed packets counter
+    uint bytesSend;
+    uint bytesRecv;
+    //@}
 
-    char *dev;  //name of interface to sniff on
-    pcap_t *descr;
+    char *dev;                      //interface name
+    u_int mask;                     //netmask of sniffing device
+    u_int net;                      //IP of sniffing device
+    pcap_t *descr;                  //session handle
     char errbuf[PCAP_ERRBUF_SIZE];
 
     // variables to analyze packet content

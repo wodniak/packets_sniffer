@@ -5,11 +5,12 @@ namespace gw
 
 BasicSniffer::BasicSniffer()
 {
+    //registering callback for pcap_loop
     Callback<void(u_char *, const struct pcap_pkthdr*, const u_char*)>::func = std::bind(&BasicSniffer::packetHandler,
          this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     callback_t func = static_cast<callback_t>(Callback<void(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)>::callback);
 
-    dev = pcap_lookupdev(errbuf);
+    dev = pcap_lookupdev(errbuf);   //interface name
     if (dev == NULL) 
     {
         std::cout << "pcap_lookupdev() failed: " << errbuf << std::endl;
@@ -21,8 +22,7 @@ BasicSniffer::BasicSniffer()
         std::cout << "pcap_open_live() failed: " << errbuf << std::endl;
     }
 
-    // this is wrong, you cant pass nonstatic member this way
-    if (pcap_loop(descr, 10, func, NULL) < 0) 
+    if (pcap_loop(descr, 0, func, NULL) < 0) 
     {
         std::cout << "pcap_loop() failed: " << pcap_geterr(descr);
     }
@@ -37,14 +37,26 @@ BasicSniffer::~BasicSniffer()
 
 void BasicSniffer::packetHandler(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)
 {
-    std::cout << ++packetCount << " packet(s) captured" << std::endl;
-    
+    ++packetCount;
+
     ethernetHeader = (struct ether_header*)packet;
     if (ntohs(ethernetHeader->ether_type) == ETHERTYPE_IP) 
     {
         ipHeader = (struct ip*)(packet + sizeof(struct ether_header));
         inet_ntop(AF_INET, &(ipHeader->ip_src), sourceIp, INET_ADDRSTRLEN);
         inet_ntop(AF_INET, &(ipHeader->ip_dst), destIp, INET_ADDRSTRLEN);
+
+        //Check if packet was send or received
+        if (strcmp(sourceIp, "192.168.1.178") == 0)
+        {
+            bytesSend += pkthdr->len;
+        }
+        else
+        {
+            bytesRecv += pkthdr->len;
+        }
+        
+        std::cout << "Statistics:\tSend: " << bytesSend << "\tRecv: " << bytesRecv << std::endl; 
 
         if (ipHeader->ip_p == IPPROTO_TCP) 
         {
@@ -72,7 +84,7 @@ void BasicSniffer::packetHandler(u_char *userData, const struct pcap_pkthdr* pkt
             std::cout << sourceIp << ":" << sourcePort << " -> " << destIp << ":" << destPort << std::endl;
             if (dataLength > 0) 
             {
-                std::cout << dataStr << std::endl;
+                // std::cout << dataStr << std::endl;
             }
         }
     }

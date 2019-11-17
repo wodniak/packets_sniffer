@@ -5,6 +5,5 @@
 int main() 
 {
     gw::BasicSniffer();
-
     return 0;
 }

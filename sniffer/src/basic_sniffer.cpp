@@ -5,8 +5,11 @@ namespace gw
 
 BasicSniffer::BasicSniffer()
 {
+    //init displayer
+    display = new DisplayCLI();
+
     //registering callback for pcap_loop
-    Callback<void(u_char *, const struct pcap_pkthdr*, const u_char*)>::func = std::bind(&BasicSniffer::packetHandler,
+    Callback<void(u_char *, const struct pcap_pkthdr*, const u_char*)>::func = std::bind(&BasicSniffer::packet_callback,
          this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
     callback_t func = static_cast<callback_t>(Callback<void(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)>::callback);
 
@@ -35,9 +38,9 @@ BasicSniffer::~BasicSniffer()
 }
 
 
-void BasicSniffer::packetHandler(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)
+void BasicSniffer::packet_callback(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)
 {
-    ++packetCount;
+    ++displayData.packetCount;
 
     ethernetHeader = (struct ether_header*)packet;
     if (ntohs(ethernetHeader->ether_type) == ETHERTYPE_IP) 
@@ -49,45 +52,67 @@ void BasicSniffer::packetHandler(u_char *userData, const struct pcap_pkthdr* pkt
         //Check if packet was send or received
         if (strcmp(sourceIp, "192.168.1.178") == 0)
         {
-            bytesSend += pkthdr->len;
+            displayData.bytesSend += pkthdr->len;
         }
         else
         {
-            bytesRecv += pkthdr->len;
+            displayData.bytesRecv += pkthdr->len;
         }
         
-        std::cout << "Statistics:\tSend: " << bytesSend << "\tRecv: " << bytesRecv << std::endl; 
-
-        if (ipHeader->ip_p == IPPROTO_TCP) 
+        switch(ipHeader->ip_p)
         {
-            tcpHeader = (tcphdr*)(packet + sizeof(struct ether_header) + sizeof(struct ip));
-            sourcePort = ntohs(tcpHeader->source);
-            destPort = ntohs(tcpHeader->dest);
-            data = (u_char*)(packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct tcphdr));
-            dataLength = pkthdr->len - (sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct tcphdr));
-
-            // convert non-printable characters, other than carriage return, line feed,
-            // or tab into periods when displayed.
-            for (int i = 0; i < dataLength; i++) 
-            {
-                if ((data[i] >= 32 && data[i] <= 126) || data[i] == 10 || data[i] == 11 || data[i] == 13) 
-                {
-                    dataStr += (char)data[i];
-                }
-                else 
-                {
-                    dataStr += ".";
-                }
-            }
-
-            // print the results
-            std::cout << sourceIp << ":" << sourcePort << " -> " << destIp << ":" << destPort << std::endl;
-            if (dataLength > 0) 
-            {
-                // std::cout << dataStr << std::endl;
-            }
+            case IPPROTO_TCP:
+                this->packet_TCP_callback(userData, pkthdr, packet);
+                break;
+            
+            case IPPROTO_UDP:
+                this->packet_UDP_callback(userData, pkthdr, packet);
+                break;
+            
+            default:
+                std::cout << "Packet type not supported." << std::endl;
         }
     }
+
+    display->refresh(&displayData);
 }
+
+
+void BasicSniffer::packet_TCP_callback(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)
+{
+    tcpHeader = (tcphdr*)(packet + sizeof(struct ether_header) + sizeof(struct ip));
+    sourcePort = ntohs(tcpHeader->source);
+    destPort = ntohs(tcpHeader->dest);
+    data = (u_char*)(packet + sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct tcphdr));
+    dataLength = pkthdr->len - (sizeof(struct ether_header) + sizeof(struct ip) + sizeof(struct tcphdr));
+
+    // convert non-printable characters, other than carriage return, line feed,
+    // or tab into periods when displayed.
+    for (int i = 0; i < dataLength; i++) 
+    {
+        if ((data[i] >= 32 && data[i] <= 126) || data[i] == 10 || data[i] == 11 || data[i] == 13) 
+        {
+            dataStr += (char)data[i];
+        }
+        else 
+        {
+            dataStr += ".";
+        }
+    }
+
+    // print the results
+    std::cout << sourceIp << ":" << sourcePort << " -> " << destIp << ":" << destPort << std::endl;
+    if (dataLength > 0) 
+    {
+        // std::cout << dataStr << std::endl;
+    }
+}
+
+
+void BasicSniffer::packet_UDP_callback(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)
+{
+    std::cout << "UDP flying\n";
+}
+
 
 } //namespace gw

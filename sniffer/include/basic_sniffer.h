@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <functional>
 #include <string.h>     //strcmp
+#include <memory>   //unique_ptr
 
 #include <pcap.h>
 #include <net/ethernet.h>
@@ -13,8 +14,20 @@
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 
+#include "display.hpp"
+
 namespace gw
 {
+
+//processed packets information
+//used to communicate with Displayer
+class statistics_t
+{
+public:
+    uint packetCount;    //total numer of packets
+    uint bytesSend;
+    uint bytesRecv;
+};
 
 //Callback for C function made from non-static function from BasicSniffer class
 template <typename T>
@@ -49,28 +62,33 @@ public:
 
     /**
      *  \brief Callback for pcap_loop.
-     *         Execute some logic on packets
+     *         Check type of sniffed packet and call apropriate packet callback 
      */
-    void packetHandler(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
+    void packet_callback(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
+    void packet_TCP_callback(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
+    void packet_UDP_callback(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet);
 
 private:
     //used to pass C++ non-static function as callback to C function from libpcap
     typedef void (*callback_t)(u_char *, const struct pcap_pkthdr*, const u_char*);
-    
+
+    //Application GUI
     //Keep record of listened packets
     //@{
-    uint packetCount;    //processed packets counter
-    uint bytesSend;
-    uint bytesRecv;
+    DisplayCLI * display;
+    statistics_t displayData;
     //@}
 
+    // Sniffer control
+    //@{
     char *dev;                      //interface name
     u_int mask;                     //netmask of sniffing device
     u_int net;                      //IP of sniffing device
     pcap_t *descr;                  //session handle
     char errbuf[PCAP_ERRBUF_SIZE];
+    //@}
 
-    // variables to analyze packet content
+    // analyze packet content
     //@{
     struct ether_header* ethernetHeader;
     struct ip* ipHeader;

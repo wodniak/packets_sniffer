@@ -11,6 +11,7 @@ set(INCLUDE_DIR sniffer/include)
 set(SOURCE_FILES 
     ${SOURCE_DIR}/main.cpp
     ${SOURCE_DIR}/basic_sniffer.cpp
+    ${SOURCE_DIR}/display.cpp
 )
 
 include_directories(${INCLUDE_DIR})

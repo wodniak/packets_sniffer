@@ -2,17 +2,18 @@
 #define DISPLAY_HPP
 
 #include <iostream>
+#include "basic_sniffer.h"
 
 #define CONSOLE_CLEAN std::system("clear")
 
 namespace gw
 {
 
-class Display
+class DisplayCLI
 {
 public:
-    Display();
-    void refresh();
+    DisplayCLI();
+    void refresh(const statistics_t * data);
 
 private:
     

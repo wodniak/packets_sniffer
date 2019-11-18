@@ -15,19 +15,10 @@
 #include <arpa/inet.h>
 
 #include "display.hpp"
+#include "common.hpp"
 
 namespace gw
 {
-
-//processed packets information
-//used to communicate with Displayer
-class statistics_t
-{
-public:
-    uint packetCount;    //total numer of packets
-    uint bytesSend;
-    uint bytesRecv;
-};
 
 //Callback for C function made from non-static function from BasicSniffer class
 template <typename T>

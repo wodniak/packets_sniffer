@@ -2,7 +2,7 @@
 #define DISPLAY_HPP
 
 #include <iostream>
-#include "basic_sniffer.h"
+#include "common.hpp"
 
 #define CONSOLE_CLEAN std::system("clear")
 
@@ -13,10 +13,8 @@ class DisplayCLI
 {
 public:
     DisplayCLI();
-    void refresh(const statistics_t * data);
+    void refresh(const statistics_t & data);
 
-private:
-    
 };
 
 } //namespace gw

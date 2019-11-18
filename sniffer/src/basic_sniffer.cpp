@@ -1,4 +1,4 @@
-#include "basic_sniffer.h"
+#include "basic_sniffer.hpp"
 
 namespace gw
 {   
@@ -74,12 +74,13 @@ void BasicSniffer::packet_callback(u_char *userData, const struct pcap_pkthdr* p
         }
     }
 
-    display->refresh(&displayData);
+    display->refresh(displayData);
 }
 
 
 void BasicSniffer::packet_TCP_callback(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)
 {
+    displayData.TCPCount++;
     tcpHeader = (tcphdr*)(packet + sizeof(struct ether_header) + sizeof(struct ip));
     sourcePort = ntohs(tcpHeader->source);
     destPort = ntohs(tcpHeader->dest);
@@ -111,6 +112,7 @@ void BasicSniffer::packet_TCP_callback(u_char *userData, const struct pcap_pkthd
 
 void BasicSniffer::packet_UDP_callback(u_char *userData, const struct pcap_pkthdr* pkthdr, const u_char* packet)
 {
+    displayData.UDPCount++;
     std::cout << "UDP flying\n";
 }
 

@@ -16,6 +16,14 @@ typedef struct
 
 } statistics_t;
 
+typedef uint8_t status_t;
 }
 
+//Error codes for application
+#define SUCCESS 0x001
+
+//display
+//@{
+#define FAIL 0x002
+//@}
 #endif //COMMON_H

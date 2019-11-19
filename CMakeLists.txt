@@ -12,11 +12,14 @@ set(HEADER_FILES
     ${INCLUDE_DIR}/basic_sniffer.hpp 
     ${INCLUDE_DIR}/display.hpp
     ${INCLUDE_DIR}/common.hpp
+    ${INCLUDE_DIR}/logger.hpp
+
 )
 set(SOURCE
     ${SOURCE_DIR}/main.cpp
     ${SOURCE_DIR}/basic_sniffer.cpp
     ${SOURCE_DIR}/display.cpp
+    ${SOURCE_DIR}/logger.cpp
 )
 
 add_executable(sniffer 
